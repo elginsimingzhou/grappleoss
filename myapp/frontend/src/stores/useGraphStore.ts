@@ -2,27 +2,19 @@ import { create } from "zustand";
 import type { Node, Edge, Connection, NodeChange, EdgeChange } from "reactflow";
 import { addEdge, applyNodeChanges, applyEdgeChanges } from "reactflow";
 import { nanoid } from "nanoid";
+import type { DetailNodeData } from "../components/graphs_ui/DetailNode";
 
 /* ================================
    Types
 ================================ */
 
-export type DetailNodeType =
-  | "Position"
-  | "Action"
-  | "Reaction"
-  | "Submission"
-  | "None";
-
-export type DetailNodeData = {
-  title: string;
-  type: DetailNodeType;
-  descriptionHtml: string;
-};
-
 type GraphState = {
   nodes: Node<DetailNodeData>[];
   edges: Edge[];
+
+  selectedNodeId: string | null;
+  openNodeModal: (nodeId: string) => void;
+  closeNodeModal: () => void;
 
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
@@ -52,15 +44,13 @@ const initialNodes: Node<DetailNodeData>[] = [
     type: "detailNode",
     position: { x: 0, y: 0 },
     data: {
-      title: "Shin to Shin Guard",
+      label: "Shin to Shin Guard",
       type: "Position",
-      descriptionHtml: `
-        <ul>
-          <li>Wrap left arm over opponent’s right leg knee pit</li>
-          <li>Place your shin across his shin</li>
-          <li>Control the far ankle and off-balance</li>
-        </ul>
+      description: `
+        Opponent postures up or attempts to disengage.
       `,
+      youtubeUrl: "https://www.youtube.com/watch?v=23enzBqgkhs",
+      youtubeVideoId: "23enzBqgkhs",
     },
   },
   {
@@ -68,11 +58,13 @@ const initialNodes: Node<DetailNodeData>[] = [
     type: "detailNode",
     position: { x: 420, y: -120 },
     data: {
-      title: "Opponent Tries to Stand",
+      label: "Opponent Tries to Stand",
       type: "Reaction",
-      descriptionHtml: `
-        <p>Opponent postures up or attempts to disengage.</p>
+      description: `
+        Opponent postures up or attempts to disengage.
       `,
+      youtubeUrl: "https://youtu.be/23enzBqgkhs?si=R772e0MTScJRad0W",
+      youtubeVideoId: "23enzBqgkhs",
     },
   },
   {
@@ -80,11 +72,13 @@ const initialNodes: Node<DetailNodeData>[] = [
     type: "detailNode",
     position: { x: 420, y: 120 },
     data: {
-      title: "Single Leg X",
+      label: "Single Leg X",
       type: "Position",
-      descriptionHtml: `
-        <p>Transition to SLX by elevating the leg and controlling the ankle.</p>
+      description: `
+        Transition to SLX by elevating the leg and controlling the ankle
       `,
+      youtubeUrl: "https://www.youtube.com/shorts/pY4Irfhh9NU",
+      youtubeVideoId: "pY4Irfhh9NU",
     },
   },
   {
@@ -92,11 +86,13 @@ const initialNodes: Node<DetailNodeData>[] = [
     type: "detailNode",
     position: { x: 840, y: -120 },
     data: {
-      title: "Technical Stand-Up Sweep",
+      label: "Technical Stand-Up Sweep",
       type: "Action",
-      descriptionHtml: `
-        <p>Stand up with the leg, drive forward, and finish the sweep.</p>
+      description: `
+        Stand up with the leg, drive forward, and finish the sweep.
       `,
+      youtubeUrl: "https://youtube.com/shorts/0N_HyIf669E?si=Q5bE_l5DQkmB_ozS",
+      youtubeVideoId: "0N_HyIf669E",
     },
   },
 ];
@@ -128,6 +124,7 @@ const initialEdges: Edge[] = [
 export const useGraphStore = create<GraphState>((set, get) => ({
   nodes: initialNodes,
   edges: initialEdges,
+  selectedNodeId: null,
 
   /* React Flow callbacks */
   onNodesChange: (changes) => {
@@ -156,6 +153,10 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   /* Custom actions */
+  openNodeModal: (nodeId) => set({selectedNodeId: nodeId}),
+
+  closeNodeModal: () => set({selectedNodeId: null}),
+
   addNode: (position) => {
     const id = nanoid();
 
@@ -164,9 +165,9 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       type: "detailNode",
       position: position ?? { x: 200, y: 200 },
       data: {
-        title: "Untitled",
+        label: "Untitled",
         type: "None",
-        descriptionHtml: "",
+        description: "",
       },
     };
 
