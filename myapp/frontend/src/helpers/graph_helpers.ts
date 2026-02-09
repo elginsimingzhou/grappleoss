@@ -1,4 +1,4 @@
-function getYouTubeVideoId(url: string): string | null {
+export function getYouTubeVideoId(url: string): string | null {
   try {
     const u = new URL(url);
 

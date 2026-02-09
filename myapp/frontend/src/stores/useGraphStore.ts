@@ -3,6 +3,7 @@ import type { Node, Edge, Connection, NodeChange, EdgeChange } from "reactflow";
 import { addEdge, applyNodeChanges, applyEdgeChanges } from "reactflow";
 import { nanoid } from "nanoid";
 import type { DetailNodeData } from "../components/graphs_ui/DetailNode";
+import type { NodeConnection } from "../types/index";
 
 /* ================================
    Types
@@ -22,7 +23,17 @@ type GraphState = {
 
   addNode: (position?: { x: number; y: number }) => void;
   updateNodeData: (nodeId: string, patch: Partial<DetailNodeData>) => void;
-  addConnection: (sourceId: string, targetId: string, label?: string) => void;
+  addConnection: (
+    sourceId: string,
+    targetId: string,
+    description?: string,
+  ) => void;
+  updateConnection: (
+    nodeId: string,
+    connectionId: string,
+    description: string,
+  ) => void;
+  deleteConnection: (nodeId: string, connectionId: string) => void;
   deleteNode: (nodeId: string) => void;
   deleteEdge: (edgeId: string) => void;
 
@@ -49,6 +60,8 @@ const initialNodes: Node<DetailNodeData>[] = [
       description: `
         Opponent postures up or attempts to disengage.
       `,
+      content: "",
+      connections: [],
       youtubeUrl: "https://www.youtube.com/watch?v=23enzBqgkhs",
       youtubeVideoId: "23enzBqgkhs",
     },
@@ -63,6 +76,8 @@ const initialNodes: Node<DetailNodeData>[] = [
       description: `
         Opponent postures up or attempts to disengage.
       `,
+      content: "",
+      connections: [],
       youtubeUrl: "https://youtu.be/23enzBqgkhs?si=R772e0MTScJRad0W",
       youtubeVideoId: "23enzBqgkhs",
     },
@@ -77,6 +92,8 @@ const initialNodes: Node<DetailNodeData>[] = [
       description: `
         Transition to SLX by elevating the leg and controlling the ankle
       `,
+      content: "",
+      connections: [],
       youtubeUrl: "https://www.youtube.com/shorts/pY4Irfhh9NU",
       youtubeVideoId: "pY4Irfhh9NU",
     },
@@ -91,6 +108,8 @@ const initialNodes: Node<DetailNodeData>[] = [
       description: `
         Stand up with the leg, drive forward, and finish the sweep.
       `,
+      content: "",
+      connections: [],
       youtubeUrl: "https://youtube.com/shorts/0N_HyIf669E?si=Q5bE_l5DQkmB_ozS",
       youtubeVideoId: "0N_HyIf669E",
     },
@@ -153,9 +172,9 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   /* Custom actions */
-  openNodeModal: (nodeId) => set({selectedNodeId: nodeId}),
+  openNodeModal: (nodeId) => set({ selectedNodeId: nodeId }),
 
-  closeNodeModal: () => set({selectedNodeId: null}),
+  closeNodeModal: () => set({ selectedNodeId: null }),
 
   addNode: (position) => {
     const id = nanoid();
@@ -168,6 +187,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         label: "Untitled",
         type: "None",
         description: "",
+        content: "",
+        connections: [],
       },
     };
 
@@ -186,17 +207,78 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     }));
   },
 
-  addConnection: (sourceId, targetId, label) => {
+  addConnection: (sourceId, targetId, description) => {
     const newEdge: Edge = {
       id: nanoid(),
       source: sourceId,
       target: targetId,
-      label,
+      label: description,
       type: "default",
     };
 
+    // Also store in node connections
     set((state) => ({
       edges: [...state.edges, newEdge],
+      nodes: state.nodes.map((node) => {
+        if (node.id === sourceId) {
+          const newConnection: NodeConnection = {
+            id: newEdge.id,
+            targetNodeId: targetId,
+            description,
+            createdAt: Date.now(),
+          };
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              connections: [...(node.data.connections || []), newConnection],
+            },
+          };
+        }
+        return node;
+      }),
+    }));
+  },
+
+  updateConnection: (nodeId, connectionId, description) => {
+    set((state) => ({
+      nodes: state.nodes.map((node) => {
+        if (node.id === nodeId && node.data.connections) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              connections: node.data.connections.map((conn) =>
+                conn.id === connectionId ? { ...conn, description } : conn,
+              ),
+            },
+          };
+        }
+        return node;
+      }),
+      edges: state.edges.map((edge) =>
+        edge.id === connectionId ? { ...edge, label: description } : edge,
+      ),
+    }));
+  },
+
+  deleteConnection: (nodeId, connectionId) => {
+    set((state) => ({
+      nodes: state.nodes.map((node) => {
+        if (node.id === nodeId && node.data.connections) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              connections: node.data.connections.filter(
+                (c) => c.id !== connectionId,
+              ),
+            },
+          };
+        }
+        return node;
+      }),
+      edges: state.edges.filter((e) => e.id !== connectionId),
     }));
   },
 

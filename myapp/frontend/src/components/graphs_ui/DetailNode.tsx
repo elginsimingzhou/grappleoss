@@ -1,15 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { NodeProps } from "reactflow";
 import { Handle, Position } from "reactflow";
 
-import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
-import Youtube from "@tiptap/extension-youtube";
-import Placeholder from "@tiptap/extension-placeholder";
-
 import { getYouTubeThumb } from "../../helpers/graph_helpers";
+import type { NodeConnection } from "../../types/index";
 
 // ✅ adjust path to your zustand store
 import { useGraphStore } from "../../stores/useGraphStore";
@@ -25,35 +18,14 @@ export type DetailNodeData = {
   label: string;
   type: DetailNodeType;
   description: string;
+  content?: string; // Rich text content from TipTap editor
+  connections?: NodeConnection[]; // Connections to other nodes
   youtubeUrl?: string;
   youtubeVideoId?: string;
 };
 
-export default function DetailNode({ id, data }: NodeProps<DetailNodeData>) {
-  const nodes = useGraphStore((s) => s.nodes);
-  const edges = useGraphStore((s) => s.edges);
-  const updateNodeData = useGraphStore((s) => s.updateNodeData);
-  const addConnection = useGraphStore((s) => s.addConnection);
-  const deleteNode = useGraphStore((s) => s.deleteNode);
-  const deleteEdge = useGraphStore((s) => s.deleteEdge);
-
-  const otherNodes = useMemo(
-    () => nodes.filter((n) => n.id !== id),
-    [nodes, id],
-  );
-
-  const outgoingEdges = useMemo(
-    () => edges.filter((e) => e.source === id),
-    [edges, id],
-  );
-
-  // Title editing
-  const [label, setLabel] = useState(data.label ?? "");
-  useEffect(() => setLabel(data.label ?? ""), [data.label]);
-
-  const commitLabel = () => {
-    updateNodeData(id, { label: label });
-  };
+export default function DetailNode({ data }: NodeProps<DetailNodeData>) {
+  useGraphStore((s) => s.nodes);
 
   return (
     <div className="w-[360px] rounded-md border bg-white p-2 text-sm text-black">

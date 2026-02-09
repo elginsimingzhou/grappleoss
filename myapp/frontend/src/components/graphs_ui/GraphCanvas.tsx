@@ -1,10 +1,11 @@
-import ReactFlow, { Background, Controls, } from "reactflow";
+import ReactFlow, { Background, Controls } from "reactflow";
 import type { NodeMouseHandler } from "reactflow";
 import "reactflow/dist/style.css";
 import { useGraphStore } from "../../stores/useGraphStore";
 import DetailNode from "./DetailNode";
 import NodeEditModal from "./NodeEditModal";
 
+// Define nodeTypes outside component to avoid recreation warnings
 const nodeTypes = {
   detailNode: DetailNode,
 };
